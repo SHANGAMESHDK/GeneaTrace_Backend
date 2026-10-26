@@ -1,0 +1,15 @@
+{
+  "name": "geneatrace-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for GeneaTrace blockchain anchor registry",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts --network localhost"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.6",
+    "typescript": "^5.5.3"
+  }
+}

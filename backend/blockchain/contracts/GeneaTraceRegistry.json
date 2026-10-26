@@ -1,0 +1,124 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "bytes32", "name": "merkleRoot", "type": "bytes32"},
+      {"indexed": false, "internalType": "string", "name": "batchId", "type": "string"},
+      {"indexed": false, "internalType": "uint256", "name": "eventCount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
+    "name": "CheckpointRecorded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "bytes32", "name": "commitment", "type": "bytes32"},
+      {"indexed": false, "internalType": "string", "name": "reason", "type": "string"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
+    "name": "CommitmentRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "bytes32", "name": "commitment", "type": "bytes32"},
+      {"indexed": false, "internalType": "string", "name": "entityId", "type": "string"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
+    "name": "IdentityCommitmentRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "issuer", "type": "address"},
+      {"indexed": true, "internalType": "address", "name": "authorizedBy", "type": "address"}
+    ],
+    "name": "IssuerAuthorized",
+    "type": "event"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "issuer", "type": "address"}],
+    "name": "authorizeIssuer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "name": "authorizedIssuers",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes32", "name": "merkleRoot", "type": "bytes32"}],
+    "name": "getCheckpoint",
+    "outputs": [
+      {"internalType": "bool", "name": "exists", "type": "bool"},
+      {"internalType": "string", "name": "batchId", "type": "string"},
+      {"internalType": "uint256", "name": "eventCount", "type": "uint256"},
+      {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+      {"internalType": "address", "name": "recorder", "type": "address"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "bytes32", "name": "merkleRoot", "type": "bytes32"},
+      {"internalType": "string", "name": "batchId", "type": "string"},
+      {"internalType": "uint256", "name": "eventCount", "type": "uint256"}
+    ],
+    "name": "recordCheckpoint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "bytes32", "name": "commitment", "type": "bytes32"},
+      {"internalType": "string", "name": "entityId", "type": "string"}
+    ],
+    "name": "registerIdentityCommitment",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "bytes32", "name": "commitment", "type": "bytes32"},
+      {"internalType": "string", "name": "reason", "type": "string"}
+    ],
+    "name": "revokeCommitment",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "bytes32", "name": "commitment", "type": "bytes32"}],
+    "name": "verifyCommitment",
+    "outputs": [
+      {"internalType": "bool", "name": "exists", "type": "bool"},
+      {"internalType": "bool", "name": "isRevoked", "type": "bool"},
+      {"internalType": "string", "name": "entityId", "type": "string"},
+      {"internalType": "uint256", "name": "registeredAt", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
