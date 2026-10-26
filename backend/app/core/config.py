@@ -1,7 +1,7 @@
 import os
-from typing import List, Optional
+from typing import Any, List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, field_validator
 
 
 class Settings(BaseSettings):
@@ -24,6 +24,30 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"],
         env="CORS_ORIGINS",
     )
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: Any) -> List[str]:
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("[") and v.endswith("]"):
+                inner = v[1:-1].strip()
+                if not inner:
+                    return ["*"]
+                try:
+                    import json
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        return [str(item).strip() for item in parsed]
+                except Exception:
+                    pass
+                return [part.strip().strip("'\"") for part in inner.split(",") if part.strip()]
+            elif "," in v:
+                return [part.strip().strip("'\"") for part in v.split(",") if part.strip()]
+            return [v.strip("'\"")]
+        elif isinstance(v, list):
+            return [str(i) for i in v]
+        return ["*"]
 
     # Relational Database (PostgreSQL / Supabase / SQLite for local tests)
     DATABASE_URL: str = Field(

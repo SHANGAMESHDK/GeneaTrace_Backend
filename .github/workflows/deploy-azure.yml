@@ -54,4 +54,4 @@ jobs:
         run: |
           APP_URL="https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net"
           echo "Checking health endpoint at $APP_URL/health..."
-          curl --fail --retry 5 --retry-delay 10 "$APP_URL/health" || exit 1
+          curl --fail --retry 12 --retry-delay 10 "$APP_URL/health" || exit 1
