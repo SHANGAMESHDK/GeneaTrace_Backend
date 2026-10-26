@@ -30,8 +30,9 @@ jobs:
           DATABASE_URL: "sqlite:///:memory:"
           BLOCKCHAIN_ENABLED: "false"
           NEO4J_ENABLED: "false"
+          PYTHONPATH: "."
         run: |
-          pytest backend/tests -v
+          python -m pytest backend/tests -v
 
   deploy:
     name: Deploy to Azure App Service
