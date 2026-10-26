@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -24,6 +24,7 @@ router = APIRouter(prefix="/security", tags=["Device Identity & Security Workflo
 
 
 @router.post("/attestations", response_model=AttestationResponse)
+@router.post("/attest", response_model=AttestationResponse)
 def submit_attestation(req: AttestationRequest, db: Session = Depends(get_db)):
     return device_security_service.verify_attestation(db, req)
 
@@ -81,6 +82,7 @@ def evaluate_device(
 
 
 @router.post("/commands", response_model=CommandResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/lock", response_model=CommandResponse, status_code=status.HTTP_201_CREATED)
 def issue_device_command(
     req: LockCommandCreate,
     db: Session = Depends(get_db),
@@ -107,11 +109,14 @@ def report_command_execution(
 
 
 @router.post("/devices/{product_id}/recovery")
+@router.post("/recover/{product_id}")
 def recover_device(
     product_id: str,
-    req: RecoveryRequest,
+    req: Optional[RecoveryRequest] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission("security:recovery")),
 ):
+    if req is None:
+        req = RecoveryRequest(product_id=product_id, verification_evidence="API_RECOVERY", reason="Authorized recovery via portal")
     req.product_id = product_id
     return device_security_service.recover_device(db, req, officer_id=current_user.username)

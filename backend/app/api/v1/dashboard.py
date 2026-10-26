@@ -16,6 +16,7 @@ router = APIRouter(prefix="/dashboard", tags=["Operational Dashboard"])
 
 
 @router.get("/summary", response_model=DashboardSummaryResponse)
+@router.get("/metrics", response_model=DashboardSummaryResponse)
 def get_dashboard_summary(db: Session = Depends(get_db)):
     return dashboard_service.get_summary(db)
 

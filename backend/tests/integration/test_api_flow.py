@@ -92,3 +92,24 @@ def test_end_to_end_manufacturing_and_passport_flow(client, auth_headers):
     trace_data = trace_res.json()
     assert trace_data["entity_id"] == "GT-DEV-00000851"
     assert trace_data["query_duration_ms"] < 100.0  # Sub-100ms requirement!
+
+    # 7. Frontend Compatibility Aliases
+    # Dashboard metrics alias
+    metrics_res = client.get("/api/v1/dashboard/metrics")
+    assert metrics_res.status_code == 200
+    assert metrics_res.json()["total_products_assembled"] >= 1
+
+    # Lineage forward & backward aliases
+    fwd_res = client.get("/api/v1/lineage/forward/ABC")
+    assert fwd_res.status_code == 200
+    assert fwd_res.json()["entity_id"] == "ABC"
+
+    bwd_res = client.get("/api/v1/lineage/backward/GT-DEV-00000851")
+    assert bwd_res.status_code == 200
+    assert bwd_res.json()["entity_id"] == "GT-DEV-00000851"
+
+    # Recall exposure alias
+    exposure_res = client.get("/api/v1/recalls/exposure/ABC")
+    assert exposure_res.status_code == 200
+    assert exposure_res.json()["batch_code"] == "ABC"
+    assert exposure_res.json()["unique_affected_product_count"] >= 1

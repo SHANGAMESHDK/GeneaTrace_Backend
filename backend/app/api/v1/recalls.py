@@ -103,6 +103,27 @@ def get_recall_impact(recall_id: str, db: Session = Depends(get_db)):
     return recall_service.calculate_batch_impact(db, rec.batch.batch_code)
 
 
+@router.get("/exposure/{batch_code}", response_model=RecallImpactResponse)
+def get_batch_recall_exposure(batch_code: str, db: Session = Depends(get_db)):
+    """Frontend compatibility alias for batch recall impact analysis"""
+    return recall_service.calculate_batch_impact(db, batch_code)
+
+
+@router.post("/trigger", response_model=RecallResponse, status_code=status.HTTP_201_CREATED)
+def trigger_recall_alias(
+    req: RecallCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("recalls:create")),
+):
+    """Frontend compatibility alias for initiating a precision recall"""
+    rec = recall_service.create_recall(db, req, creator_id=current_user.id)
+    impact = recall_service.calculate_batch_impact(db, rec.batch.batch_code)
+    resp = RecallResponse.model_validate(rec)
+    resp.batch_code = rec.batch.batch_code
+    resp.impact = impact
+    return resp
+
+
 @router.get("/{recall_id}/export")
 def export_recall_csv(recall_id: str, db: Session = Depends(get_db)):
     csv_data = recall_service.export_recall_csv(db, recall_id)
