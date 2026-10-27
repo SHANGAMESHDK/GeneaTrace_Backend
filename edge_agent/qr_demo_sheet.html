@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeneaTrace EdgeStation™ - Jury Demo QR Tokens</title>
+  <title>GeneaTrace — Cryptographic Serial QR Label Sheet</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,54 +18,80 @@
     }
     .header {
       text-align: center;
-      max-width: 800px;
-      margin-bottom: 30px;
+      max-width: 850px;
+      margin-bottom: 25px;
     }
     .badge {
       display: inline-block;
       padding: 4px 12px;
       border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       background: rgba(16, 185, 129, 0.15);
       color: #34d399;
       border: 1px solid rgba(16, 185, 129, 0.3);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     h1 {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
       color: #ffffff;
       margin-bottom: 8px;
     }
     p.subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: #9ca3af;
       line-height: 1.5;
     }
+    .actions-bar {
+      margin-bottom: 25px;
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-primary {
+      background: #10b981;
+      color: #042f2e;
+    }
+    .btn-primary:hover { background: #34d399; }
+    .btn-outline {
+      background: #1e2433;
+      color: #cbd5e1;
+      border: 1px solid #3b4256;
+    }
+    .btn-outline:hover { background: #2a3348; }
+
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-      max-width: 1050px;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 20px;
+      max-width: 1100px;
       width: 100%;
     }
     .card {
       background: #181b24;
       border: 1px solid #2e3547;
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 14px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      transition: transform 0.2s, border-color 0.2s;
-    }
-    .card:hover {
-      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      position: relative;
     }
     .card.genuine-product { border-top: 4px solid #10b981; }
     .card.genuine-component { border-top: 4px solid #3b82f6; }
@@ -73,13 +99,13 @@
 
     .qr-container {
       background: #ffffff;
-      padding: 16px;
-      border-radius: 12px;
-      margin: 16px 0;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      padding: 14px;
+      border-radius: 10px;
+      margin: 14px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
     .target-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
       color: #ffffff;
       margin-bottom: 4px;
@@ -87,129 +113,192 @@
     .target-code {
       font-family: monospace;
       font-size: 13px;
-      padding: 4px 8px;
+      padding: 4px 10px;
       background: rgba(255,255,255,0.08);
       border-radius: 6px;
-      color: #cbd5e1;
-      margin-bottom: 12px;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      font-weight: 700;
     }
     .desc {
       font-size: 12px;
       color: #94a3b8;
       line-height: 1.4;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      min-height: 34px;
     }
     .tag {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
       border-radius: 6px;
+      margin-bottom: 12px;
     }
     .tag.pass { background: rgba(16, 185, 129, 0.2); color: #34d399; }
     .tag.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
     .tag.alarm { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 
+    .btn-download-token {
+      background: #252d3d;
+      color: #e2e8f0;
+      border: 1px solid #3e485e;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-download-token:hover {
+      background: #333d52;
+      color: #ffffff;
+    }
+
     .instructions {
-      max-width: 1050px;
+      max-width: 1100px;
       width: 100%;
-      margin-top: 35px;
+      margin-top: 30px;
       background: #181b24;
       border: 1px solid #2e3547;
-      border-radius: 16px;
-      padding: 24px;
+      border-radius: 14px;
+      padding: 20px;
     }
     .instructions h3 {
-      font-size: 16px;
+      font-size: 15px;
       color: #f3f4f6;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .instructions ol {
       padding-left: 20px;
-      font-size: 13px;
+      font-size: 12px;
       color: #94a3b8;
-      line-height: 1.8;
+      line-height: 1.7;
     }
-    .instructions ol li strong {
-      color: #e2e8f0;
-    }
+    .instructions ol li strong { color: #e2e8f0; }
+
     @media print {
-      body { background: white; color: black; }
-      .card { border: 1px solid #ccc; box-shadow: none; background: white; color: black; page-break-inside: avoid; }
+      body { background: white; color: black; padding: 0; }
+      .header, .actions-bar, .instructions { display: none; }
+      .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+      .card { border: 1px solid #999; box-shadow: none; background: white; color: black; page-break-inside: avoid; }
       .target-title { color: black; }
       .target-code { color: black; background: #eee; }
+      .desc { color: #555; }
+      .btn-download-token { display: none; }
     }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <div class="badge">Cyber-Physical Industrial Edge Gate</div>
-    <h1>GeneaTrace EdgeStation™ Demo Tokens</h1>
+    <div class="badge">GeneaTrace • Cryptographic Pictorial Tokens</div>
+    <h1>Digital Product Passport QR Label Sheet</h1>
     <p class="subtitle">
-      Hold these tokens in front of the <strong>Raspberry Pi 4B USB Camera</strong>.<br>
-      Watch the <strong>CP2102 Hardware Bus LEDs</strong> blink and observe live verification on the <strong>GeneaTrace Web UI</strong>.
+      Scan with your <strong>Android APK</strong>, <strong>Vercel Mobile Scanner (/scanner)</strong>, or hold in front of the <strong>Raspberry Pi USB Camera</strong>.
     </p>
   </div>
 
+  <div class="actions-bar">
+    <button class="btn btn-primary" onclick="window.print()">
+      🖨️ Print Label Sheet
+    </button>
+    <button class="btn btn-outline" onclick="downloadAllTokens()">
+      📥 Download All Tokens (PNG)
+    </button>
+  </div>
+
   <div class="grid">
-    <!-- Token 1: Genuine Product -->
+    <!-- Token 1: Samsung Galaxy A55 5G (Showcase Unit) -->
     <div class="card genuine-product">
-      <div class="target-title">1. Genuine Flagship Product</div>
-      <div class="target-code">GT-DEV-00000851</div>
-      <div class="qr-container" id="qr1"></div>
+      <div class="target-title">1. Samsung Galaxy A55 5G</div>
+      <div class="target-code">AAA12345678</div>
+      <div class="qr-container" id="qr_a55"></div>
       <p class="desc">
-        Flagship Galaxy S24 Ultra unboxed at service center. Has authorized Merkle root anchored in Block #1849340.
+        Cryptographic blockchain container for Batch AAA. Anchored on Merkle DAG root 0x9f3b8a1c...
       </p>
-      <div class="tag pass">✔ EXPECTED: GREEN PASS & DPP VERIFIED</div>
+      <div class="tag pass">✔ EXPECTED: GREEN PASS &amp; VERIFIED DPP</div>
+      <button class="btn-download-token" onclick="downloadSingleQR('qr_a55', 'Samsung_A55_AAA12345678')">
+        ⬇️ Download PNG Label
+      </button>
     </div>
 
-    <!-- Token 2: Genuine Component -->
+    <!-- Token 2: Genuine Display Component -->
     <div class="card genuine-component">
-      <div class="target-title">2. Genuine Display Component</div>
-      <div class="target-code">ABC-0042</div>
-      <div class="qr-container" id="qr2"></div>
+      <div class="target-title">2. Genuine Display Module</div>
+      <div class="target-code">AAA-0042</div>
+      <div class="qr-container" id="qr_disp"></div>
       <p class="desc">
-        AMOLED Dynamic 2X module belonging to Batch ABC. Traces directly to Assembly Cell 3.
+        Super AMOLED display module belonging to Batch AAA (Machine DISP-04 stage).
       </p>
-      <div class="tag blue">✔ EXPECTED: BLUE BATCH ABC LINEAGE</div>
+      <div class="tag blue">✔ EXPECTED: BLUE BATCH AAA LINEAGE</div>
+      <button class="btn-download-token" onclick="downloadSingleQR('qr_disp', 'Display_Module_AAA-0042')">
+        ⬇️ Download PNG Label
+      </button>
     </div>
 
-    <!-- Token 3: Tampered / Counterfeit -->
+    <!-- Token 3: Counterfeit / Fake Component (Step 16) -->
     <div class="card tampered">
-      <div class="target-title">3. Counterfeit / Tampered Part</div>
+      <div class="target-title">3. Counterfeit / Fake Screen</div>
       <div class="target-code">FAKE-DISP-9999</div>
-      <div class="qr-container" id="qr3"></div>
+      <div class="qr-container" id="qr_fake"></div>
       <p class="desc">
-        Cloned or unauthorized replacement screen detected during field repair. Zero hash in Merkle-DAG.
+        3rd-party replacement screen with non-matching cryptographic hash. Triggers auto-lock.
       </p>
-      <div class="tag alarm">✖ EXPECTED: FLASHING RED & DEVICE LOCK</div>
+      <div class="tag alarm">✖ EXPECTED: RED FLASH &amp; AUTO-LOCK</div>
+      <button class="btn-download-token" onclick="downloadSingleQR('qr_fake', 'Counterfeit_FAKE-DISP-9999')">
+        ⬇️ Download PNG Label
+      </button>
     </div>
   </div>
 
   <div class="instructions">
-    <h3>Jury Demo Walkthrough Script (30 Seconds):</h3>
+    <h3>Jury Presentation Walkthrough (30 Seconds):</h3>
     <ol>
-      <li><strong>Show Token 1 (GT-DEV-00000851)</strong> to the camera: The HUD locks green, CP2102 blinks green telemetry, and the public DPP is displayed.</li>
-      <li><strong>Explain the Value</strong>: <em>"Every assembly checkpoint and warranty claim is mathematically verified against the Merkle-DAG in under 12ms."</em></li>
-      <li><strong>Show Token 3 (FAKE-DISP-9999)</strong> to the camera: The HUD turns red, CP2102 sends the emergency lock signal, and GeneaTrace locks down the device to prevent counterfeit fraud.</li>
+      <li><strong>Show Token 1 (AAA12345678)</strong>: The scanner verifies the cryptographic container and loads the Samsung Galaxy A55 5G Digital Product Passport.</li>
+      <li><strong>Show Token 2 (AAA-0042)</strong>: Traces backward to Stage 2 Machine DISP-04 in Batch AAA.</li>
+      <li><strong>Show Token 3 (FAKE-DISP-9999)</strong>: Demonstrates Step 16: The security engine flags a counterfeit component and executes a remote cryptographic lock on the physical phone screen!</li>
     </ol>
   </div>
 
   <script>
-    // Fallback simple QR renderer
     function makeQR(id, text) {
       new QRCode(document.getElementById(id), {
         text: text,
-        width: 160,
-        height: 160,
+        width: 170,
+        height: 170,
         colorDark : "#000000",
         colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
       });
     }
-    makeQR("qr1", "GT-DEV-00000851");
-    makeQR("qr2", "ABC-0042");
-    makeQR("qr3", "FAKE-DISP-9999");
+
+    makeQR("qr_a55", "https://geneatrace.vercel.app/passport/AAA12345678");
+    makeQR("qr_disp", "AAA-0042");
+    makeQR("qr_fake", "FAKE-DISP-9999");
+
+    function downloadSingleQR(containerId, filename) {
+      const img = document.querySelector(`#${containerId} img`);
+      if (img && img.src) {
+        const a = document.createElement('a');
+        a.href = img.src;
+        a.download = `GeneaTrace_${filename}.png`;
+        a.click();
+      } else {
+        const canvas = document.querySelector(`#${containerId} canvas`);
+        if (canvas) {
+          const a = document.createElement('a');
+          a.href = canvas.toDataURL('image/png');
+          a.download = `GeneaTrace_${filename}.png`;
+          a.click();
+        }
+      }
+    }
+
+    function downloadAllTokens() {
+      downloadSingleQR('qr_a55', 'Samsung_A55_AAA12345678');
+      setTimeout(() => downloadSingleQR('qr_disp', 'Display_Module_AAA-0042'), 300);
+      setTimeout(() => downloadSingleQR('qr_fake', 'Counterfeit_FAKE-DISP-9999'), 600);
+    }
   </script>
 </body>
 </html>
