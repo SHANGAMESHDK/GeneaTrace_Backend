@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeneaTrace EdgeStation™ - Jury Demo QR Tokens</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f1117;
+      color: #e5e7eb;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: 30px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      font-size: 14px;
+      color: #9ca3af;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 1050px;
+      width: 100%;
+    }
+    .card {
+      background: #181b24;
+      border: 1px solid #2e3547;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+    }
+    .card.genuine-product { border-top: 4px solid #10b981; }
+    .card.genuine-component { border-top: 4px solid #3b82f6; }
+    .card.tampered { border-top: 4px solid #ef4444; }
+
+    .qr-container {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 12px;
+      margin: 16px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .target-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .target-code {
+      font-family: monospace;
+      font-size: 13px;
+      padding: 4px 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 6px;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+    }
+    .desc {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .tag.pass { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .tag.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .tag.alarm { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .instructions {
+      max-width: 1050px;
+      width: 100%;
+      margin-top: 35px;
+      background: #181b24;
+      border: 1px solid #2e3547;
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .instructions h3 {
+      font-size: 16px;
+      color: #f3f4f6;
+      margin-bottom: 12px;
+    }
+    .instructions ol {
+      padding-left: 20px;
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.8;
+    }
+    .instructions ol li strong {
+      color: #e2e8f0;
+    }
+    @media print {
+      body { background: white; color: black; }
+      .card { border: 1px solid #ccc; box-shadow: none; background: white; color: black; page-break-inside: avoid; }
+      .target-title { color: black; }
+      .target-code { color: black; background: #eee; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="badge">Cyber-Physical Industrial Edge Gate</div>
+    <h1>GeneaTrace EdgeStation™ Demo Tokens</h1>
+    <p class="subtitle">
+      Hold these tokens in front of the <strong>Raspberry Pi 4B USB Camera</strong>.<br>
+      Watch the <strong>CP2102 Hardware Bus LEDs</strong> blink and observe live verification on the <strong>GeneaTrace Web UI</strong>.
+    </p>
+  </div>
+
+  <div class="grid">
+    <!-- Token 1: Genuine Product -->
+    <div class="card genuine-product">
+      <div class="target-title">1. Genuine Flagship Product</div>
+      <div class="target-code">GT-DEV-00000851</div>
+      <div class="qr-container" id="qr1"></div>
+      <p class="desc">
+        Flagship Galaxy S24 Ultra unboxed at service center. Has authorized Merkle root anchored in Block #1849340.
+      </p>
+      <div class="tag pass">✔ EXPECTED: GREEN PASS & DPP VERIFIED</div>
+    </div>
+
+    <!-- Token 2: Genuine Component -->
+    <div class="card genuine-component">
+      <div class="target-title">2. Genuine Display Component</div>
+      <div class="target-code">ABC-0042</div>
+      <div class="qr-container" id="qr2"></div>
+      <p class="desc">
+        AMOLED Dynamic 2X module belonging to Batch ABC. Traces directly to Assembly Cell 3.
+      </p>
+      <div class="tag blue">✔ EXPECTED: BLUE BATCH ABC LINEAGE</div>
+    </div>
+
+    <!-- Token 3: Tampered / Counterfeit -->
+    <div class="card tampered">
+      <div class="target-title">3. Counterfeit / Tampered Part</div>
+      <div class="target-code">FAKE-DISP-9999</div>
+      <div class="qr-container" id="qr3"></div>
+      <p class="desc">
+        Cloned or unauthorized replacement screen detected during field repair. Zero hash in Merkle-DAG.
+      </p>
+      <div class="tag alarm">✖ EXPECTED: FLASHING RED & DEVICE LOCK</div>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <h3>Jury Demo Walkthrough Script (30 Seconds):</h3>
+    <ol>
+      <li><strong>Show Token 1 (GT-DEV-00000851)</strong> to the camera: The HUD locks green, CP2102 blinks green telemetry, and the public DPP is displayed.</li>
+      <li><strong>Explain the Value</strong>: <em>"Every assembly checkpoint and warranty claim is mathematically verified against the Merkle-DAG in under 12ms."</em></li>
+      <li><strong>Show Token 3 (FAKE-DISP-9999)</strong> to the camera: The HUD turns red, CP2102 sends the emergency lock signal, and GeneaTrace locks down the device to prevent counterfeit fraud.</li>
+    </ol>
+  </div>
+
+  <script>
+    // Fallback simple QR renderer
+    function makeQR(id, text) {
+      new QRCode(document.getElementById(id), {
+        text: text,
+        width: 160,
+        height: 160,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+    }
+    makeQR("qr1", "GT-DEV-00000851");
+    makeQR("qr2", "ABC-0042");
+    makeQR("qr3", "FAKE-DISP-9999");
+  </script>
+</body>
+</html>
