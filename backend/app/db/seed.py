@@ -130,6 +130,7 @@ def seed_database():
 
         # 4. Seed Batches and allocate 100 units per batch
         batches_def = [
+            ("AAA", ComponentType.DISPLAY, 100),
             ("ABC", ComponentType.DISPLAY, 100),
             ("BTR", ComponentType.BATTERY, 100),
             ("PCB", ComponentType.PCB, 100),
@@ -295,6 +296,36 @@ def seed_database():
         db.commit()
         print(f"[OK] Seeded flagship smartphone GT-DEV-00000851 with verified components.")
 
+        # Seed Samsung Galaxy A55 5G (AAA12345678)
+        target_a55 = "AAA12345678"
+        phone_a55 = db.execute(select(FinishedProduct).where(FinishedProduct.product_id == target_a55)).scalar_one_or_none()
+        if not phone_a55:
+            phone_a55 = FinishedProduct(
+                product_id=target_a55,
+                product_type="SAMSUNG_GALAXY_A55_5G",
+                manufacturer_id="SAMSUNG-SMART-MEGAHUB-4",
+                assembly_facility_id="FAC-ASM-01",
+                manufacturing_status=ProductManufacturingStatus.SHIPPED,
+                quality_status="PASSED",
+                authorized_device_identity_commitment="0x9f3b8a1c4e72d05f88b14a2c91e3f706a45b98cf120194bc87123985",
+                masked_imei="356789******780",
+                passport_status=PassportStatus.PUBLISHED,
+            )
+            db.add(phone_a55)
+            db.flush()
+
+            comp_a55 = db.execute(select(Component).where(Component.component_serial == "AAA-0042")).scalar_one_or_none()
+            if comp_a55:
+                db.add(ProductComponentRelationship(
+                    product_id=phone_a55.id,
+                    component_id=comp_a55.id,
+                    installation_timestamp=datetime.now(timezone.utc) - timedelta(days=5),
+                    relationship_status=AssemblyRelationshipStatus.ACTIVE,
+                ))
+                comp_a55.status = ComponentStatus.INSTALLED
+            db.commit()
+            print(f"[OK] Seeded showcase Samsung Galaxy A55 5G (AAA12345678).")
+
         # 7. Seed Shipments
         shp1 = db.execute(select(Shipment).where(Shipment.shipment_id == "SHP-2026-US-001")).scalar_one_or_none()
         if not shp1:
@@ -325,6 +356,24 @@ def seed_database():
                 timestamp=datetime.now(timezone.utc) - timedelta(days=2),
                 notes="Departed sorting facility in sealed climate-controlled freight container.",
             ))
+
+        # Seed Shipment GT-SHP-00000326 for Samsung A55 to Indiranagar Retail
+        shp_a55 = db.execute(select(Shipment).where(Shipment.shipment_id == "GT-SHP-00000326")).scalar_one_or_none()
+        if not shp_a55:
+            shp_a55 = Shipment(
+                shipment_id="GT-SHP-00000326",
+                origin="Samsung Mega-Hub 4, Gumi",
+                destination="Apex Retail Hub, Indiranagar, Bangalore",
+                carrier="DHL Express Supply Chain Intercontinental",
+                dispatched_at=datetime.now(timezone.utc) - timedelta(days=4),
+                expected_delivery=datetime.now(timezone.utc) - timedelta(days=1),
+                delivered_at=datetime.now(timezone.utc) - timedelta(days=1),
+                status=ShipmentStatus.DELIVERED,
+            )
+            db.add(shp_a55)
+            db.flush()
+            if phone_a55:
+                db.add(ShipmentItem(shipment_id=shp_a55.id, product_id=phone_a55.id))
         db.commit()
         print(f"[OK] Seeded logistics shipments and chain-of-custody events.")
 
@@ -342,8 +391,22 @@ def seed_database():
                 created_by=user_map["recall_mgr"].id,
             )
             db.add(rec)
-            db.commit()
-            print(f"[OK] Seeded precision recall scenario RCL-2026-DISP-001 for Batch ABC.")
+
+        # Seed Recall for Batch AAA (Samsung A55)
+        rec_aaa = db.execute(select(Recall).where(Recall.recall_id == "RCL-2026-AAA")).scalar_one_or_none()
+        if not rec_aaa and "AAA" in batch_map:
+            rec_aaa = Recall(
+                recall_id="RCL-2026-AAA",
+                affected_batch_id=batch_map["AAA"].id,
+                defect_category="STAGE_2_DISP_04_THERMAL_VARIANCE",
+                severity=RecallSeverity.CRITICAL,
+                description="Machine DISP-04 thermal lamination anomaly during Stage 2 caused AMOLED micro-delamination and green vertical lines on Batch AAA.",
+                status=RecallStatus.INITIATED,
+                created_by=user_map["recall_mgr"].id,
+            )
+            db.add(rec_aaa)
+        db.commit()
+        print(f"[OK] Seeded precision recall scenarios for Batch ABC & Batch AAA.")
 
         # 9. Seed Integration Sources
         sources = [
