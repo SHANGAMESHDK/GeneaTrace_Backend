@@ -48,6 +48,7 @@ class _MobileScannerScreenState extends State<MobileScannerScreen> {
   DateTime? _lastScanTime;
   Map<String, dynamic>? _lastResult;
   bool _isProcessing = false;
+  bool _isTorchOn = false;
 
   void _onDetect(BarcodeCapture capture) async {
     final List<Barcode> barcodes = capture.barcodes;
@@ -195,16 +196,14 @@ class _MobileScannerScreenState extends State<MobileScannerScreen> {
         ),
         actions: [
           IconButton(
-            icon: ValueListenableBuilder(
-              valueListenable: _controller.torchState,
-              builder: (context, state, child) {
-                return Icon(
-                  state == TorchState.on ? Icons.flash_on : Icons.flash_off,
-                  color: state == TorchState.on ? Colors.amber : Colors.white60,
-                );
-              },
+            icon: Icon(
+              _isTorchOn ? Icons.flash_on : Icons.flash_off,
+              color: _isTorchOn ? Colors.amber : Colors.white60,
             ),
-            onPressed: () => _controller.toggleTorch(),
+            onPressed: () {
+              _controller.toggleTorch();
+              setState(() => _isTorchOn = !_isTorchOn);
+            },
           ),
           IconButton(
             icon: const Icon(Icons.cameraswitch, color: Colors.white60),
