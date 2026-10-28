@@ -1,16 +1,27 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
+from backend.app.api.deps import require_permission
 from backend.app.db.postgres import get_db
 from backend.app.models.batch import ComponentType
 from backend.app.models.component import ComponentStatus
 from backend.app.schemas.common import PaginatedResponse
-from backend.app.schemas.component import ComponentResponse
+from backend.app.schemas.component import ComponentCreate, ComponentResponse
 from backend.app.schemas.manufacturing import EventResponse
 from backend.app.services.component_service import component_service
 from backend.app.services.manufacturing_service import manufacturing_service
 
 router = APIRouter(prefix="/components", tags=["Components"])
+
+
+@router.post("", response_model=ComponentResponse, status_code=status.HTTP_201_CREATED)
+def register_component(
+    comp_in: ComponentCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_permission("components:create")),
+):
+    comp = component_service.create_component(db, comp_in)
+    return ComponentResponse.model_validate(comp)
 
 
 @router.get("", response_model=PaginatedResponse[ComponentResponse])

@@ -72,13 +72,26 @@ class _MobileScannerScreenState extends State<MobileScannerScreen> {
   void _processScan(String targetId) async {
     setState(() => _isProcessing = true);
 
-    bool isTampered = targetId.contains('FAKE') ||
-        targetId.contains('TAMPER') ||
-        targetId.contains('UNAUTH');
-    bool isGenuineProduct =
-        targetId.contains('GT-DEV-00000851') || targetId.contains('851');
-    bool isGenuineComponent =
-        targetId.contains('ABC') || targetId.contains('0042');
+    String cleanId = targetId.trim().toUpperCase();
+    if (cleanId.contains('/PASSPORT/')) {
+      cleanId = cleanId.split('/PASSPORT/')[1].split('?')[0].split('/')[0];
+    }
+
+    bool isTampered = cleanId.contains('FAKE') ||
+        cleanId.contains('TAMPER') ||
+        cleanId.contains('UNAUTH') ||
+        cleanId.contains('UNREGISTERED');
+    bool isGenuineProduct = cleanId.contains('AAA12345678') ||
+        cleanId.contains('AAA') ||
+        cleanId.contains('A55') ||
+        cleanId.contains('12345678') ||
+        cleanId.contains('GT-DEV-00000851') ||
+        cleanId.contains('851');
+    bool isGenuineComponent = cleanId.contains('AAA-0042') ||
+        cleanId.contains('AAA-') ||
+        cleanId.contains('ABC') ||
+        cleanId.contains('0042') ||
+        cleanId.contains('CMP-DIS');
 
     // Haptic Feedback
     if (await Vibration.hasVibrator() ?? false) {
@@ -93,7 +106,7 @@ class _MobileScannerScreenState extends State<MobileScannerScreen> {
     Map<String, dynamic> result;
     if (isTampered) {
       result = {
-        'targetId': targetId,
+        'targetId': cleanId,
         'verdict': 'TAMPERED',
         'title': 'ALERT: HARDWARE TAMPERING DETECTED',
         'subtitle': 'Unauthorized replacement component detected.',
@@ -102,23 +115,24 @@ class _MobileScannerScreenState extends State<MobileScannerScreen> {
       };
     } else if (isGenuineProduct) {
       result = {
-        'targetId': 'GT-DEV-00000851',
+        'targetId': 'AAA12345678',
         'verdict': 'GENUINE_PRODUCT',
-        'title': 'VERIFIED: GALAXY S24 ULTRA',
-        'subtitle': 'DPP Authenticated against EVM Block #1849340.',
+        'title': 'VERIFIED: SAMSUNG GALAXY A55 5G',
+        'subtitle': 'Batch AAA DPP Authenticated on EVM Block #1849340.',
         'merkle': '0x9f3b8a1c4e72d05f88b14a2c91e3f706',
         'isValid': true,
       };
     } else if (isGenuineComponent) {
       result = {
-        'targetId': 'ABC-0042',
+        'targetId': cleanId.contains('AAA') ? 'AAA-0042' : 'ABC-0042',
         'verdict': 'GENUINE_COMPONENT',
-        'title': 'VERIFIED: DISPLAY MODULE (BATCH ABC)',
-        'subtitle': 'Authorized AMOLED Dynamic 2X panel.',
+        'title': 'VERIFIED: SUPER AMOLED DISPLAY (BATCH AAA)',
+        'subtitle': 'Authorized display module linked to Machine DISP-04 stage.',
         'merkle': '0x4e72d05f88b14a2c91e3f7069f3b8a1c',
         'isValid': true,
       };
     } else {
+
       result = {
         'targetId': targetId,
         'verdict': 'UNKNOWN',

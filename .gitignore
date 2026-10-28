@@ -59,3 +59,5 @@ contracts/artifacts/
 contracts/cache/
 contracts/typechain/
 contracts/typechain-types/
+apk_output/
+*.apk

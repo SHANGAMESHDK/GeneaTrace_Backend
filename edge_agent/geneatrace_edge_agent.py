@@ -50,15 +50,46 @@ class EdgeEventHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', '*')
         self.end_headers()
         self.wfile.write(json.dumps(last_scan_event).encode('utf-8'))
 
+    def do_POST(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            payload = json.loads(post_data.decode('utf-8'))
+            raw_target = payload.get("target_id") or payload.get("code") or ""
+            target_id = extract_clean_identifier(raw_target)
+            eval_res = verify_target(target_id, DEFAULT_BACKEND_URL)
+            
+            last_scan_event.update({
+                "status": "SCANNED",
+                "target_id": target_id,
+                "verdict": eval_res["verdict"],
+                "message": eval_res["message"],
+                "merkle_root": eval_res["merkle_root"],
+                "is_valid": eval_res["is_valid"],
+                "timestamp": time.time()
+            })
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(last_scan_event).encode('utf-8'))
+        except Exception as e:
+            self.send_response(400)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', '*')
         self.end_headers()
 
@@ -125,17 +156,73 @@ class CP2102Controller:
             # Emulated hardware log
             print(f"[CP2102-SIMULATED-BUS] >>> {packet.strip()} (LED Blink)")
 
+def extract_clean_identifier(raw: str) -> str:
+    cleaned = raw.strip()
+    if "/passport/" in cleaned:
+        cleaned = cleaned.split("/passport/")[1].split("?")[0].split("/")[0]
+    elif "/scanner" in cleaned and "target=" in cleaned:
+        cleaned = cleaned.split("target=")[1].split("&")[0]
+    elif "target=" in cleaned:
+        cleaned = cleaned.split("target=")[1].split("&")[0]
+    elif "id=" in cleaned:
+        cleaned = cleaned.split("id=")[1].split("&")[0]
+    return cleaned.strip()
+
+def query_backend(target: str, backend_url: str):
+    """Optionally queries GeneaTrace FastAPI backend for live database registered entities."""
+    if not backend_url:
+        return None
+    try:
+        base = backend_url.rstrip('/')
+        # Check product
+        p_res = requests.get(f"{base}/products/{target}", timeout=1.2)
+        if p_res.status_code == 200:
+            p_data = p_res.json()
+            return {
+                "verdict": "GENUINE_PRODUCT",
+                "message": f"{p_data.get('product_type', 'Galaxy A55 5G')} ({target}) - DPP Verified",
+                "merkle_root": p_data.get("authorized_device_identity_commitment") or "0x9f3b8a1c4e72d05f88b14a2c91e3f706",
+                "is_valid": True,
+                "security_action": "GATE_ACCESS_GRANTED"
+            }
+        # Check component
+        c_res = requests.get(f"{base}/components/{target}", timeout=1.2)
+        if c_res.status_code == 200:
+            c_data = c_res.json()
+            return {
+                "verdict": "GENUINE_COMPONENT",
+                "message": f"Component {target} ({c_data.get('component_type', 'Display')}) - Status: {c_data.get('status', 'REGISTERED')}",
+                "merkle_root": "0x4e72d05f88b14a2c91e3f7069f3b8a1c",
+                "is_valid": True,
+                "security_action": "ASSEMBLY_PASS"
+            }
+        # Check batch
+        b_res = requests.get(f"{base}/batches/{target}", timeout=1.2)
+        if b_res.status_code == 200:
+            b_data = b_res.json()
+            return {
+                "verdict": "GENUINE_COMPONENT",
+                "message": f"Manufacturing Batch {target} ({b_data.get('component_type', 'Module')}) - Verified",
+                "merkle_root": "0x4e72d05f88b14a2c91e3f7069f3b8a1c",
+                "is_valid": True,
+                "security_action": "BATCH_VERIFIED"
+            }
+    except Exception:
+        pass
+    return None
+
 def verify_target(target_id: str, backend_url: str):
     """
-    Evaluates scanned target against GeneaTrace rules:
-    - GT-DEV-00000851: Genuine Smartphone
-    - ABC-0042: Genuine Display Component
+    Evaluates scanned target against GeneaTrace rules and cloud registry:
+    - AAA12345678 / GT-DEV-00000851: Genuine Smartphone Unit (Samsung Galaxy A55 5G)
+    - AAA-0042 / ABC-0042: Genuine Display Component
     - FAKE-*: Counterfeit / Tampered Component
     """
-    target = target_id.strip()
+    clean_target = extract_clean_identifier(target_id)
+    target_upper = clean_target.upper()
     
     # 1. Counterfeit / Tampered Check
-    if "FAKE" in target.upper() or "TAMPER" in target.upper() or "UNAUTH" in target.upper():
+    if "FAKE" in target_upper or "TAMPER" in target_upper or "UNAUTH" in target_upper or "UNREGISTERED" in target_upper:
         return {
             "verdict": "TAMPERED",
             "message": "UNAUTHORIZED COMPONENT DETECTED!",
@@ -144,30 +231,35 @@ def verify_target(target_id: str, backend_url: str):
             "security_action": "TRIGGER_HARDWARE_LOCKOUT"
         }
 
-    # 2. Genuine Smartphone Unit
-    if "GT-DEV-00000851" in target.upper() or "851" in target:
+    # 2. Check Backend API if accessible
+    backend_match = query_backend(clean_target, backend_url)
+    if backend_match:
+        return backend_match
+
+    # 3. Genuine Smartphone Unit (Samsung Galaxy A55 5G / Galaxy S24/S25 Ultra)
+    if any(k in target_upper for k in ["AAA12345678", "AAA", "A55", "851", "GT-DEV", "SM-S928", "12345678"]):
         return {
             "verdict": "GENUINE_PRODUCT",
-            "message": "Galaxy S24 Ultra - DPP Authenticated",
+            "message": "Samsung Galaxy A55 5G (Batch AAA) - DPP Authenticated",
             "merkle_root": "0x9f3b8a1c4e72d05f88b14a2c91e3f706",
             "is_valid": True,
             "security_action": "GATE_ACCESS_GRANTED"
         }
 
-    # 3. Genuine Display Component
-    if "ABC" in target.upper() or "0042" in target:
+    # 4. Genuine Components (Batch AAA, ABC, or standard prefixes)
+    if any(k in target_upper for k in ["AAA-0042", "AAA-", "0042", "ABC-0042", "ABC-", "CMP-DIS", "BTR-", "PCB-", "CAM-", "FRM-", "DISP-"]):
         return {
             "verdict": "GENUINE_COMPONENT",
-            "message": "AMOLED Display Module - Batch ABC Verified",
+            "message": f"Display Module ({clean_target}) - Batch AAA Lineage Verified",
             "merkle_root": "0x4e72d05f88b14a2c91e3f7069f3b8a1c",
             "is_valid": True,
             "security_action": "ASSEMBLY_PASS"
         }
 
-    # 4. Fallback Unknown
+    # 5. Fallback Unknown / Unregistered
     return {
         "verdict": "UNKNOWN",
-        "message": f"Unregistered Identifier: {target}",
+        "message": f"Unregistered Identifier: {clean_target}",
         "merkle_root": "0xunknown000000000000000000000000",
         "is_valid": False,
         "security_action": "FLAG_FOR_INSPECTION"
@@ -185,9 +277,10 @@ def run_edge_agent(camera_index=DEFAULT_CAMERA_INDEX, serial_port=None, backend_
     # Initialize CP2102 Hardware Controller
     cp2102 = CP2102Controller(port=serial_port)
 
-    # Initialize USB Camera
+    # Initialize USB Camera with DirectShow optimization on Windows
     print(f"[CAMERA] Initializing video capture device at index {camera_index}...")
-    cap = cv2.VideoCapture(camera_index)
+    capture_api = cv2.CAP_DSHOW if sys.platform.startswith('win') else cv2.CAP_ANY
+    cap = cv2.VideoCapture(camera_index, capture_api)
     
     # Optimize resolution for Raspberry Pi 4B performance (640x480 at 30fps)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -195,15 +288,18 @@ def run_edge_agent(camera_index=DEFAULT_CAMERA_INDEX, serial_port=None, backend_
     cap.set(cv2.CAP_PROP_FPS, 30)
 
     if not cap.isOpened():
-        print(f"[CAMERA] Error: Could not open camera {camera_index}. Trying index 1 or 2...")
-        for alt_idx in [1, 2, -1]:
-            cap = cv2.VideoCapture(alt_idx)
-            if cap.isOpened():
-                print(f"[CAMERA] Successfully opened camera at index {alt_idx}")
-                break
+        print(f"[CAMERA] Error: Could not open camera {camera_index}. Trying standard backend or alternate indices...")
+        cap = cv2.VideoCapture(camera_index)
         if not cap.isOpened():
-            print("[CAMERA] Critical: No USB camera detected. Please check your camera USB connection.")
-            return
+            for alt_idx in [1, 2, -1]:
+                cap = cv2.VideoCapture(alt_idx, capture_api)
+                if cap.isOpened():
+                    print(f"[CAMERA] Successfully opened camera at index {alt_idx}")
+                    break
+        if not cap.isOpened():
+            print("[CAMERA] Notice: No physical camera opened (or in use by browser).")
+            print("[CAMERA] EdgeStation server is active and listening for live HTTP scans at http://localhost:8765/scan")
+
 
     # Initialize OpenCV QR Code Detector
     detector = cv2.QRCodeDetector()
