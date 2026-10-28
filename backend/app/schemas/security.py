@@ -80,3 +80,24 @@ class RecoveryRequest(BaseModel):
     authorized_officer_reason: str
     replacement_component_serial: Optional[str] = None
     new_commitment_salt: Optional[str] = None
+
+
+class ScanEventCreate(BaseModel):
+    target_id: str
+    scan_source: Optional[str] = "OPTICAL_SCANNER"
+    verdict: Optional[str] = "VERIFIED"
+    is_valid: Optional[bool] = True
+    merkle_root: Optional[str] = None
+    scanner_location: Optional[str] = "Cleanroom Complex Alpha Line 3"
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class ScanEventResponse(BaseModel):
+    id: str
+    target_id: str
+    verdict: str
+    is_valid: bool
+    status: str
+    merkle_root: Optional[str] = None
+    recorded_at: datetime
+    supabase_persisted: bool = True

@@ -44,6 +44,31 @@ last_scan_event = {
     "merkle_root": None
 }
 
+def record_scan_to_backend(target_id: str, verdict: str, is_valid: bool, merkle_root: str, backend_url: str = DEFAULT_BACKEND_URL, scan_source: str = "EDGE_STATION_CP2102", scanner_location: str = "Cleanroom Gate Alpha"):
+    """Dispatches scan audit record asynchronously to FastAPI backend for Supabase PostgreSQL persistence."""
+    def _post():
+        if not backend_url:
+            return
+        base = backend_url.rstrip('/')
+        url = f"{base}/security/scans"
+        payload = {
+            "target_id": target_id,
+            "scan_source": scan_source,
+            "verdict": verdict,
+            "is_valid": is_valid,
+            "merkle_root": merkle_root,
+            "scanner_location": scanner_location,
+            "metadata": {"timestamp": time.time(), "agent": "GeneaTrace_EdgeStation"}
+        }
+        try:
+            resp = requests.post(url, json=payload, timeout=2.5)
+            if resp.status_code in [200, 201]:
+                print(f"[SUPABASE-AUDIT] Scan event logged to Supabase for {target_id} (Status: {resp.status_code})")
+        except Exception:
+            pass
+    threading.Thread(target=_post, daemon=True).start()
+
+
 class EdgeEventHandler(BaseHTTPRequestHandler):
     """Lightweight HTTP server to let the GeneaTrace React Frontend get live scans instantly."""
     def do_GET(self):
@@ -73,6 +98,17 @@ class EdgeEventHandler(BaseHTTPRequestHandler):
                 "is_valid": eval_res["is_valid"],
                 "timestamp": time.time()
             })
+
+            # Record into Supabase
+            record_scan_to_backend(
+                target_id=target_id,
+                verdict=eval_res["verdict"],
+                is_valid=eval_res["is_valid"],
+                merkle_root=eval_res["merkle_root"],
+                backend_url=DEFAULT_BACKEND_URL,
+                scan_source="BROWSER_EDGE_SYNC",
+                scanner_location="Operator Viewfinder / Test Bench"
+            )
             
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -349,6 +385,17 @@ def run_edge_agent(camera_index=DEFAULT_CAMERA_INDEX, serial_port=None, backend_
 
                 # Send Hardware Bus pulse to CP2102
                 cp2102.send_pulse(eval_res["verdict"], target_id, eval_res["merkle_root"])
+
+                # Persist scan event directly into Supabase PostgreSQL
+                record_scan_to_backend(
+                    target_id=target_id,
+                    verdict=eval_res["verdict"],
+                    is_valid=eval_res["is_valid"],
+                    merkle_root=eval_res["merkle_root"],
+                    backend_url=backend_url,
+                    scan_source="EDGE_STATION_CP2102",
+                    scanner_location="Industrial Gate Alpha - Cleanroom 3"
+                )
 
                 # Console log
                 status_symbol = "✔ PASS" if eval_res["is_valid"] else "✖ ALARM"
