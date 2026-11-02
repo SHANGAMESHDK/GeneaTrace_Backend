@@ -1,63 +1,15 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-/lib/
-/lib64/
-!mobile_app/lib/
-!mobile_app/lib/**
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
-.venv/
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Environment variables & secrets
+node_modules/
+.next/
 .env
 .env.local
-.env.*.local
-
-# Databases
-*.db
-*.sqlite
-*.sqlite3
-geneatrace_local.db
-
-# Testing & Coverage
+data/
+*.log
+blockchain/node_modules/
+blockchain/artifacts/
+blockchain/cache/
+blockchain/.env
+# leftovers from the previous Python backend
+.venv/
 .pytest_cache/
-.coverage
-htmlcov/
-.tox/
-
-# IDE & OS
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# Node / Hardhat
-node_modules/
-contracts/artifacts/
-contracts/cache/
-contracts/typechain/
-contracts/typechain-types/
-apk_output/
-*.apk
+__pycache__/
+*.db

@@ -1,0 +1,20 @@
+{
+  "name": "geneatrace-blockchain",
+  "version": "2.0.0",
+  "private": true,
+  "description": "GeneaTrace Ethereum anchor contract (Hardhat)",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "export-abi": "hardhat run scripts/export-abi.js",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "3.0.8",
+    "dotenv": "16.4.5",
+    "ethers": "6.13.4",
+    "hardhat": "2.22.15"
+  }
+}

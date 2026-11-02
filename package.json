@@ -1,0 +1,25 @@
+{
+  "name": "geneatrace-backend",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GeneaTrace ledger node + REST API on Next.js (Supabase Postgres or local file store)",
+  "scripts": {
+    "dev": "next dev -p 8080",
+    "build": "next build",
+    "start": "next start -p 8080",
+    "seed": "node scripts/seed.js",
+    "reset": "node scripts/reset.js",
+    "demo-logins": "node scripts/demo-logins.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "dotenv": "16.4.5",
+    "ethers": "6.13.4",
+    "next": "14.2.35",
+    "pg": "8.13.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "3.23.8"
+  }
+}

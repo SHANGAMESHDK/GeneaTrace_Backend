@@ -1,4 +1,4 @@
-name: Deploy GeneaTrace Backend to Azure App Service
+name: Deploy GeneaTrace Backend (Next.js) to Azure App Service
 
 on:
   push:
@@ -7,61 +7,47 @@ on:
 
 jobs:
   test:
-    name: Run Test Suite
+    name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-          cache: "pip"
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt
-
-      - name: Run Pytest
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run test suite (local file store, no Ethereum)
         env:
-          APP_ENV: "test"
-          DATABASE_URL: "sqlite:///:memory:"
-          BLOCKCHAIN_ENABLED: "false"
-          NEO4J_ENABLED: "false"
-          PYTHONPATH: "."
-        run: |
-          python -m pytest backend/tests -v
+          DATABASE_URL: ""
+          ETH_RPC_URL: ""
+        run: npm test
 
   deploy:
-    name: Deploy to Azure App Service
+    name: Build and deploy
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-
-      - name: Pre-build Dependencies for Azure App Service
-        run: |
-          python -m pip install --upgrade pip
-          pip install --target=".python_packages/lib/site-packages" -r backend/requirements.txt
-
+          node-version: 22
+          cache: npm
+      - run: npm ci --omit=dev
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      - name: Package (built app + production node_modules)
+        run: zip -qr app.zip .next node_modules lib app supabase public package.json package-lock.json next.config.mjs -x ".next/cache/*"
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
-
-      - name: Verify Health Endpoint
+          package: app.zip
+      - name: Verify health endpoint
         run: |
           APP_URL="https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net"
-          echo "Checking health endpoint at $APP_URL/health..."
-          curl --fail --retry 12 --retry-delay 10 "$APP_URL/health" || exit 1
+          echo "Checking $APP_URL/api/public/health"
+          curl --fail --retry 18 --retry-delay 10 --retry-all-errors "$APP_URL/api/public/health"
