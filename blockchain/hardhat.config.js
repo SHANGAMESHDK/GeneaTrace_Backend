@@ -2,7 +2,9 @@ require('@nomicfoundation/hardhat-ethers');
 require('dotenv').config();
 
 // Sepolia (or any EVM network) is used only when both values are set in blockchain/.env.
-const { SEPOLIA_RPC_URL, DEPLOYER_PRIVATE_KEY } = process.env;
+const { SEPOLIA_RPC_URL } = process.env;
+const raw = process.env.DEPLOYER_PRIVATE_KEY || '';
+const DEPLOYER_PRIVATE_KEY = raw && !raw.startsWith('0x') ? `0x${raw}` : raw;
 
 /** @type {import('hardhat/config').HardhatUserConfig} */
 module.exports = {

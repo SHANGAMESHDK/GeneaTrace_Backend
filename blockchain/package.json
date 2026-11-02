@@ -8,6 +8,7 @@
     "test": "hardhat test",
     "node": "hardhat node",
     "export-abi": "hardhat run scripts/export-abi.js",
+    "check": "node scripts/check-wallet.js",
     "deploy:local": "hardhat run scripts/deploy.js --network localhost",
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia"
   },

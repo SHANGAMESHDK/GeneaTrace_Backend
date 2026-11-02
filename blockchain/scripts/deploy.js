@@ -1,7 +1,8 @@
 // Deploys GeneaTraceAnchor and wires the backend to it:
 //  - writes blockchain/deployments/<network>.json
 //  - copies the ABI to backend/lib/chain/abi/GeneaTraceAnchor.js
-//  - sets ETH_CONTRACT_ADDRESS (and ETH_RPC_URL for localhost) in backend/.env
+//  - sets ETH_CONTRACT_ADDRESS, ETH_CHAIN_ID, ETH_RPC_URL and ETH_PRIVATE_KEY in backend/.env
+//    (public networks: copied from SEPOLIA_RPC_URL / DEPLOYER_PRIVATE_KEY in blockchain/.env)
 const fs = require('node:fs');
 const path = require('node:path');
 const hre = require('hardhat');
@@ -42,13 +43,21 @@ async function main() {
     const { mnemonic, path: hdPath } = hre.config.networks.hardhat.accounts;
     env.ETH_RPC_URL = 'http://127.0.0.1:8545';
     env.ETH_PRIVATE_KEY = hre.ethers.HDNodeWallet.fromPhrase(mnemonic, undefined, `${hdPath}/0`).privateKey;
+  } else {
+    // The deploying wallet becomes the contract owner, so it is also the anchoring wallet.
+    env.ETH_RPC_URL = process.env.SEPOLIA_RPC_URL;
+    env.ETH_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY.startsWith('0x') ? process.env.DEPLOYER_PRIVATE_KEY : `0x${process.env.DEPLOYER_PRIVATE_KEY}`;
+    env.ETH_EXPLORER_URL = 'https://sepolia.etherscan.io';
   }
   const wrote = setEnv(path.join(BACKEND, '.env'), env);
 
   console.log(`GeneaTraceAnchor deployed to ${address} on ${hre.network.name} (chain ${chainId})`);
   console.log(`  owner (anchoring wallet): ${deployer.address}`);
   console.log(wrote ? '  backend/.env updated – restart the backend to start anchoring.' : '  backend/.env not found – set ETH_CONTRACT_ADDRESS there yourself.');
-  if (hre.network.name !== 'localhost') console.log('  Set ETH_RPC_URL and ETH_PRIVATE_KEY (the owner wallet) in backend/.env.');
+  if (hre.network.name !== 'localhost') {
+    console.log(`  View it: https://sepolia.etherscan.io/address/${address}`);
+    console.log('  Next: run deploy/azure-app-settings.ps1 to send the Ethereum settings to Azure.');
+  }
 }
 
 main().catch((e) => {
