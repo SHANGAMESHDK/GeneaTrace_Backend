@@ -5,6 +5,11 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# A newer push replaces any deploy still in progress.
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test
@@ -17,6 +22,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Run test suite (local file store, no Ethereum)
+        timeout-minutes: 10
         env:
           DATABASE_URL: ""
           ETH_RPC_URL: ""

@@ -11,10 +11,11 @@ const ARTIFACT = new URL('../../blockchain/artifacts/contracts/GeneaTraceAnchor.
 // Hardhat's built-in development account #9 (public test mnemonic) – keeps clear of the app's account #0.
 const TEST_MNEMONIC = 'test test test test test test test test test test test junk';
 
+// Plain fetch with a timeout: an ethers provider would retry forever when nothing listens.
 let up = false;
 try {
-  await new ethers.JsonRpcProvider(RPC).getBlockNumber();
-  up = fs.existsSync(ARTIFACT);
+  const r = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_chainId', params: [] }), signal: AbortSignal.timeout(2000) });
+  up = r.ok && fs.existsSync(ARTIFACT);
 } catch {
   up = false;
 }
