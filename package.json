@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "next dev -p 8080",
     "build": "next build",
-    "start": "next start -p 8080",
+    "start": "node node_modules/next/dist/bin/next start -p 8080",
     "seed": "node scripts/seed.js",
     "reset": "node scripts/reset.js",
     "demo-logins": "node scripts/demo-logins.js",

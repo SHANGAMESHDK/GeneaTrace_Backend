@@ -45,7 +45,7 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
       - name: Package (built app + production node_modules)
-        run: zip -qr app.zip .next node_modules lib app supabase public package.json package-lock.json next.config.mjs -x ".next/cache/*"
+        run: zip -qry app.zip .next node_modules lib app supabase public package.json package-lock.json next.config.mjs -x ".next/cache/*"
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
