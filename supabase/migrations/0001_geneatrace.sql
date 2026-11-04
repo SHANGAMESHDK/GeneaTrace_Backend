@@ -237,6 +237,15 @@ create table if not exists geneatrace.cartons (
   created_at  timestamptz not null default now()
 );
 
+-- NFC tags. last_counter rises with every tap, so an old link cannot be reused.
+create table if not exists geneatrace.nfc_tags (
+  id            text primary key,
+  product_id    text not null unique,
+  last_counter  integer not null default 0,
+  last_seen_at  timestamptz,
+  created_at    timestamptz not null default now()
+);
+
 -- Delivery log for alerts sent outside the app.
 create table if not exists geneatrace.notifications (
   id          text primary key,
@@ -283,4 +292,5 @@ alter table geneatrace.sales      enable row level security;
 alter table geneatrace.tickets    enable row level security;
 alter table geneatrace.anchors    enable row level security;
 alter table geneatrace.cartons    enable row level security;
+alter table geneatrace.nfc_tags   enable row level security;
 alter table geneatrace.notifications enable row level security;
