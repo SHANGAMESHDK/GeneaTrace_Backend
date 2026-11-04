@@ -10,6 +10,7 @@
     "start": "node node_modules/next/dist/bin/next start -p 8080",
     "seed": "node scripts/seed.js",
     "reset": "node scripts/reset.js",
+    "backup": "node scripts/backup.js",
     "demo-logins": "node scripts/demo-logins.js",
     "test": "node --test test/*.test.js"
   },

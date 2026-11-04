@@ -218,6 +218,36 @@ create index if not exists tickets_retail_idx  on geneatrace.tickets (retailer_i
 create index if not exists tickets_maker_idx   on geneatrace.tickets (manufacturer_id, status);
 create index if not exists tickets_product_idx on geneatrace.tickets (product_id);
 
+-- Device-held company keys, two-factor sign-in and alert webhooks.
+alter table geneatrace.actors add column if not exists signing_keys jsonb not null default '[]';
+alter table geneatrace.actors add column if not exists totp_secret text;
+alter table geneatrace.actors add column if not exists totp_enabled boolean not null default false;
+alter table geneatrace.actors add column if not exists totp_last_step bigint not null default 0;
+alter table geneatrace.actors add column if not exists webhook_url text;
+
+-- Customer consent for safety notices, and erasure on request.
+alter table geneatrace.sales add column if not exists consent_at timestamptz;
+alter table geneatrace.sales add column if not exists erased_at timestamptz;
+
+-- Shipping cartons: one scan moves every unit inside.
+create table if not exists geneatrace.cartons (
+  id          text primary key,
+  actor_id    text not null,
+  units       jsonb not null default '[]',
+  created_at  timestamptz not null default now()
+);
+
+-- Delivery log for alerts sent outside the app.
+create table if not exists geneatrace.notifications (
+  id          text primary key,
+  actor_id    text not null,
+  alert_id    text,
+  channel     text not null,
+  status      text not null,
+  error       text,
+  created_at  timestamptz not null default now()
+);
+
 -- Append-only enforcement. Even with direct SQL access nobody can UPDATE/DELETE/TRUNCATE
 -- the chain; anyone disabling these triggers is still caught by /api/chain/verify.
 create or replace function geneatrace.reject_mutation() returns trigger
@@ -252,3 +282,5 @@ alter table geneatrace.machines   enable row level security;
 alter table geneatrace.sales      enable row level security;
 alter table geneatrace.tickets    enable row level security;
 alter table geneatrace.anchors    enable row level security;
+alter table geneatrace.cartons    enable row level security;
+alter table geneatrace.notifications enable row level security;

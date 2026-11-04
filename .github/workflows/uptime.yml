@@ -1,0 +1,18 @@
+name: Uptime check
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: API answers and the database is connected
+        run: |
+          body=$(curl -fsS --max-time 60 https://geneatrace-api.azurewebsites.net/api/public/health)
+          echo "$body"
+          echo "$body" | grep -q '"ok":true'
+          echo "$body" | grep -q '"store":"supabase"'
